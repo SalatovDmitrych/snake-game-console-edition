@@ -1,1 +1,1 @@
-# snake-game-console-edition
+Простая консольная змейка на C + WINAPI
