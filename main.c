@@ -17,12 +17,13 @@ typedef struct //описание одной ячейки змеи
 
 typedef struct //описание змеи
 {
-    Body * body;
+    Body body[WIDTH * HEIGHT - 1];
     int length;
     snakeDirection direction;
 } Snake;
 Snake snake;
 
+HANDLE mutex;
 const int DELAY = 200; //задержка
 bool inGame = true;
 Body* head = NULL; //указатель на голову змеи
@@ -39,7 +40,7 @@ void clearMap()
 
     for (int i = 1; i < HEIGHT - 1; i++)
     {
-        memset(map[i], '.', WIDTH-1);
+        memset(map[i], 249, WIDTH-1);
         map[i][0] = '#';
         map[i][WIDTH-1] = '#';
         map[i][WIDTH] = '\n';
@@ -75,7 +76,6 @@ void initSnake()
 {
     snake.direction = RIGHT;
     snake.length = 3;
-    snake.body = realloc(snake.body, sizeof(Body) * snake.length);
 
     snake.body[0].x = 15;
     snake.body[0].y = 15;
@@ -95,16 +95,16 @@ void putOnMap()
     switch (snake.direction)
     {
     case UP:
-        map[head->y][head->x] = '^';
+        map[head->y][head->x] = 30;
         break;
     case DOWN:
-        map[head->y][head->x] = 'v';
+        map[head->y][head->x] = 31;
         break;
     case LEFT:
-        map[head->y][head->x] = '<';
+        map[head->y][head->x] = 17;
         break;
     case RIGHT:
-        map[head->y][head->x] = '>';
+        map[head->y][head->x] = 16;
         break;
     }
 
@@ -215,7 +215,9 @@ void appleEaten()
     {
         applesEaten++;
         generateApple();
+        WaitForSingleObject(mutex, INFINITE);
         addNewBody();
+        ReleaseMutex(mutex);
     }
 }
 
@@ -223,7 +225,6 @@ void appleEaten()
 void addNewBody()
 {
     snake.length++;
-    snake.body = realloc(snake.body, sizeof(Body) * snake.length);
 
     if (snake.body[snake.length-2].x < snake.body[snake.length-3].x)
     {
@@ -253,19 +254,19 @@ void asyncControl()
     do
     {
         control();
-        //Sleep(10);
     }
     while(inGame);
 }
 
 int main()
 {
+    mutex = CreateMutex(NULL, FALSE, NULL);
     clearMap();
     initSnake();
     generateApple();
     showMap();
     setCur(0, HEIGHT);
-    printf("press any key to start");
+    printf("press enter to start\n");
     getch();
     system("cls");
     CreateThread(NULL, 0, asyncControl, NULL, 0, NULL);
@@ -280,6 +281,6 @@ int main()
         Sleep(DELAY);
     }
     while(inGame);
-    free(snake.body);
+    getch();
     return 0;
 }
