@@ -23,8 +23,7 @@ typedef struct //описание змеи
 } Snake;
 Snake snake;
 
-HANDLE mutex;
-const int DELAY = 200; //задержка
+const int DELAY = 10; //задержка
 bool inGame = true;
 Body* head = NULL; //указатель на голову змеи
 Body apple;
@@ -215,9 +214,7 @@ void appleEaten()
     {
         applesEaten++;
         generateApple();
-        WaitForSingleObject(mutex, INFINITE);
         addNewBody();
-        ReleaseMutex(mutex);
     }
 }
 
@@ -248,19 +245,8 @@ void addNewBody()
     }
 }
 
-//асинхронное управление
-void asyncControl()
-{
-    do
-    {
-        control();
-    }
-    while(inGame);
-}
-
 int main()
 {
-    mutex = CreateMutex(NULL, FALSE, NULL);
     clearMap();
     initSnake();
     generateApple();
@@ -269,16 +255,23 @@ int main()
     printf("press enter to start\n");
     getch();
     system("cls");
-    CreateThread(NULL, 0, asyncControl, NULL, 0, NULL);
+    int counter = 0;
 
     do
     {
         clearMap();
         putOnMap();
-        moveSnake();
+        control();
+        if (counter >= DELAY)
+        {
+            moveSnake();
+            counter = 0;
+        }
         appleEaten();
         showMap();
-        Sleep(DELAY);
+        counter++;
+        Sleep(1);
+
     }
     while(inGame);
     getch();
